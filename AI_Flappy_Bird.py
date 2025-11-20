@@ -18,6 +18,8 @@ import os
 import random
 import time
 import statistics
+import pickle  # <-- save best genome
+import matplotlib.pyplot as plt  # <-- ML-style fitness curve
 
 import neat
 import pygame
@@ -248,7 +250,7 @@ def draw_network(win, genome):
     if genome is None:
         return
 
-    # Panel position and size
+    # Panel position and size (bottom-right)
     panel_width, panel_height = 240, 240
     panel_x, panel_y = WIN_WIDTH - panel_width - 10, 490
 
@@ -432,7 +434,7 @@ def eval_genomes(genomes, config):
 
     # Create a bird and neural net for each genome
     for _, genome in genomes:
-        genome.fitness = 0
+        genome.fitness = 1 # (This can be changed)
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         nets.append(net)
         birds.append(Bird(230, 350))
@@ -479,7 +481,7 @@ def eval_genomes(genomes, config):
             bird.move()
 
             # Reward survival slightly every frame
-            ge[x].fitness += 0.1
+            ge[x].fitness += 0.3
 
             # Small penalty for hugging top or bottom (encourage staying near center)
             if bird.y < 10 or bird.y > FLOOR - 50:
@@ -709,6 +711,48 @@ class SimpleReporter(neat.reporting.BaseReporter):
             print(f"Generation time: {dur:.3f} sec")
 
 
+def plot_fitness_curves(stats, filename="fitness_curve.png"):
+    """
+    Plot ML-style fitness curves:
+    - Best fitness per generation
+    - Average fitness per generation
+    - Shaded std deviation band around the average
+    """
+    # Generations
+    generations = list(range(len(stats.most_fit_genomes)))
+    if not generations:
+        print("[WARN] No statistics collected, skipping fitness plot.")
+        return
+
+    best_fitness = [g.fitness for g in stats.most_fit_genomes]
+    avg_fitness = stats.get_fitness_mean()
+    stdev_fitness = stats.get_fitness_stdev()
+
+    plt.figure(figsize=(8, 5))
+
+    # Best fitness
+    plt.plot(generations, best_fitness, label="Best fitness", linewidth=2)
+
+    # Average fitness
+    plt.plot(generations, avg_fitness, label="Average fitness", linestyle="--", linewidth=2)
+
+    # Std dev band around mean
+    lower = [m - s for m, s in zip(avg_fitness, stdev_fitness)]
+    upper = [m + s for m, s in zip(avg_fitness, stdev_fitness)]
+    plt.fill_between(generations, lower, upper, alpha=0.2, label="Avg ± 1 std")
+
+    plt.xlabel("Generation")
+    plt.ylabel("Fitness")
+    plt.title("NEAT Flappy Bird – Fitness over Generations")
+    plt.legend(loc="lower right")
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(filename, dpi=150)
+    plt.close()
+
+    print(f"[INFO] Saved fitness curve to {filename}")
+
+
 def run(config_file):
     """Runs the NEAT algorithm to train a network to play Flappy Bird."""
     global gen
@@ -730,6 +774,14 @@ def run(config_file):
 
     # Run up to 50 generations (early-stop if fitness_threshold reached)
     winner = p.run(eval_genomes, 50)
+
+    # === NEW: save the best genome to disk ===
+    with open("best_bird.pkl", "wb") as f:
+        pickle.dump(winner, f)
+    print("[INFO] Saved best genome to best_bird.pkl")
+
+    # === NEW: plot fitness curves to a PNG ===
+    plot_fitness_curves(stats, filename="fitness_curve.png")
 
     # Training summary
     print("\n================ TRAINING SUMMARY ================")

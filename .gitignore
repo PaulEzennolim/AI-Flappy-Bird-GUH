@@ -1,1 +1,64 @@
-node_modules/
+# ===========================================
+# Python
+# ===========================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.pkl            # model checkpoints (optional)
+*.egg-info/
+*.spec
+.env
+.venv/
+env/
+venv/
+
+# Virtualenv folders
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+parts/
+python*/
+
+
+# ===========================================
+# OS / Editor Noise
+# ===========================================
+.DS_Store
+Thumbs.db
+
+# JetBrains
+.idea/
+
+# VSCode
+.vscode/
+
+
+# ===========================================
+# Logs
+# ===========================================
+*.log
+
+
+# ===========================================
+# Pygame cache
+# ===========================================
+*.swp
+*.tmp
+
+
+# ===========================================
+# Matplotlib
+# ===========================================
+*.png            # If you want to ignore auto-generated graphs
+!images/*.png    # (But allow your game images)
+!Images/**/*.png
+
+# ===========================================
+# Your trained AI artifacts
+# ===========================================
+best_bird.pkl    # Optional: ignore trained agent file
+fitness_curve.png

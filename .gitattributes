@@ -1,2 +1,14 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.wav binary
+*.ogg binary
+
+# Prevent LF normalization for binaries
+*.jpg -text
+*.png -text
+*.wav -text
+*.ogg -text
