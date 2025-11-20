@@ -1,8 +1,6 @@
 #  AI Flappy Bird — Neuroevolution with NEAT  
 *A machine-learning powered Flappy Bird agent using evolutionary neural networks.*
 
-![Fitness Curve](fitness_curve.png)
-
 ## Project Overview
 
 This project implements **Flappy Bird** with an **AI agent trained using NEAT**  
