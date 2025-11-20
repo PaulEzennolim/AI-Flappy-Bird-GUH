@@ -1,14 +1,6 @@
 """
 The classic game of Flappy Bird with an AI player powered by NEAT.
 Made with Python and Pygame. Uses pixel-perfect collision via masks.
-
-This version is designed as an AI portfolio project:
-- Neuroevolution with NEAT
-- Normalized state representation
-- Reward shaping and fitness engineering
-- Fast training mode (no rendering)
-- Interpretable AI (vision lines + simple NN visualizer)
-- Champion playback after training
 """
 
 import warnings
@@ -18,9 +10,8 @@ import os
 import random
 import time
 import statistics
-import pickle  # <-- save best genome
-import matplotlib.pyplot as plt  # <-- ML-style fitness curve
-
+import pickle
+import matplotlib.pyplot as plt
 import neat
 import pygame
 
@@ -65,9 +56,8 @@ base_img = pygame.transform.scale2x(
 # Generation counter (used for display + summary)
 gen = 0
 
-
 class Bird:
-    """Represents the Flappy Bird controlled either by a human or by NEAT."""
+    """Represents the Flappy Bird controlled by NEAT."""
 
     MAX_ROTATION = 25  # max tilt angle in degrees
     IMGS = bird_images
@@ -150,7 +140,6 @@ class Bird:
         """Return a mask for pixel-perfect collision."""
         return pygame.mask.from_surface(self.img)
 
-
 class Pipe:
     """Represents a pipe obstacle."""
 
@@ -200,7 +189,6 @@ class Pipe:
 
         return bool(b_point or t_point)
 
-
 class Base:
     """Represents the moving ground at the bottom of the screen."""
 
@@ -228,7 +216,6 @@ class Base:
         win.blit(self.IMG, (self.x1, self.y))
         win.blit(self.IMG, (self.x2, self.y))
 
-
 def blitRotateCenter(surf, image, topleft, angle):
     """Rotate an image around its center and blit it to the surface."""
     rotated_image = pygame.transform.rotate(image, angle)
@@ -237,10 +224,9 @@ def blitRotateCenter(surf, image, topleft, angle):
     )
     surf.blit(rotated_image, new_rect.topleft)
 
-
 def draw_network(win, genome):
     """
-    Improved visualization of the lead bird's network.
+    visualization of the lead bird's network.
 
     - Inputs: 4 nodes on the left (y, top_diff, bottom_diff, vel).
     - Output: 1 node on the right (jump decision).
@@ -334,7 +320,6 @@ def draw_network(win, genome):
             pygame.draw.line(win, (color[0], color[1], color[2], 80), start, end, thickness + 2)
             pygame.draw.line(win, color, start, end, thickness)
 
-
 def draw_window(win, birds, pipes, base, score, gen, pipe_ind, genome=None):
     """Draw all game elements on the screen."""
     if gen == 0:
@@ -407,7 +392,6 @@ def draw_window(win, birds, pipes, base, score, gen, pipe_ind, genome=None):
         draw_network(win, genome)
 
     pygame.display.update()
-
 
 def eval_genomes(genomes, config):
     """
@@ -672,7 +656,6 @@ def watch_winner(config, genome):
 class SimpleReporter(neat.reporting.BaseReporter):
     """
     Custom NEAT reporter that prints clean per-generation info
-    WITHOUT the 'Total extinctions: 0' line.
     """
 
     def __init__(self):
@@ -697,7 +680,7 @@ class SimpleReporter(neat.reporting.BaseReporter):
         print(f"Population's average fitness: {avg_fitness:.5f} stdev: {stdev_fitness:.5f}")
         print(f"Best fitness: {best_genome.fitness:.5f} - size: ({len(best_genome.nodes)}, {len(best_genome.connections)})")
 
-        # Species summary (more compact than default, no extinctions line)
+        # Species summary
         print("   ID   size  best_fit")
         print("  ====  ====  =========")
 
@@ -775,12 +758,12 @@ def run(config_file):
     # Run up to 50 generations (early-stop if fitness_threshold reached)
     winner = p.run(eval_genomes, 50)
 
-    # === NEW: save the best genome to disk ===
-    with open("best_bird.pkl", "wb") as f:
+    # save the best genome to disk
+    with open("champion_bird.pkl", "wb") as f:
         pickle.dump(winner, f)
-    print("[INFO] Saved best genome to best_bird.pkl")
+    print("[INFO] Saved best genome to champion_bird.pkl")
 
-    # === NEW: plot fitness curves to a PNG ===
+    # plot fitness curves to a PNG
     plot_fitness_curves(stats, filename="fitness_curve.png")
 
     # Training summary
@@ -798,51 +781,6 @@ def run(config_file):
 
     # Watch the champion play
     watch_winner(config, winner)
-
-
-"""
-EXPERIMENT LOG / ML NOTES (for readers & recruiters)
-
-- Algorithm: NEAT (NeuroEvolution of Augmenting Topologies) via neat-python.
-- State representation:
-    * y_norm          = bird.y / WIN_HEIGHT
-    * top_diff        = (bird.y - pipe.height) / WIN_HEIGHT
-    * bottom_diff     = (bird.y - pipe.bottom) / WIN_HEIGHT
-    * vel_norm        = bird.vel / 20
-  These are chosen to give the network a compact, normalized view of:
-    * where it is vertically,
-    * where the safe gap is,
-    * and how fast it is moving.
-
-- Action:
-    * Single continuous output in [-1, 1] via tanh.
-    * Jump if output > 0.5.
-
-- Reward shaping:
-    * +0.1 per frame alive  -> encourages survival and smooth flying.
-    * +20 per pipe passed   -> strongly rewards actual progress.
-    * -1 on collision       -> penalizes crashing.
-    * Small penalties for:
-        - hugging the very top/bottom of the screen,
-        - jump spamming.
-      These reduce degenerate policies and oscillation.
-
-- Observed behavior:
-    * With these settings, the network typically finds a very strong policy
-      in just a few generations (e.g. best fitness > 2000 in generation 3).
-    * NEAT often converges to an extremely small network:
-        - one output node, no hidden nodes, a few weighted input connections.
-      This highlights a key NEAT strength: topology search + weight search.
-
-- Why this is an AI project (not just a game clone):
-    * Neuroevolution with non-trivial state design and reward engineering.
-    * Fast/slow training modes explicitly separate simulation from rendering.
-    * Simple interpretability tools:
-        - visualizing the bird's "vision" lines to the next pipe,
-        - drawing a minimal network diagram with weight sign/strength.
-    * Champion playback loop after training completes.
-"""
-
 
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)

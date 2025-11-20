@@ -1,52 +1,178 @@
-# AI Flappy Bird
+#  AI Flappy Bird — Neuroevolution with NEAT  
+*A machine-learning powered Flappy Bird agent using evolutionary neural networks.*
+
+![Fitness Curve](fitness_curve.png)
 
 ## Project Overview
 
-This project features a Flappy Bird game enhanced with an AI that learns to play using the NEAT (NeuroEvolution of Augmenting Topologies) algorithm. The AI evolves its performance across generations, improving its ability to navigate obstacles.
+This project implements **Flappy Bird** with an **AI agent trained using NEAT**  
+(NeuroEvolution of Augmenting Topologies).  
 
-## Requirements
+The AI **evolves its neural network topology and weights** over generations to learn a near-optimal strategy for surviving between pipes.
 
-* Pygame: For game visuals and interactions.
+This project demonstrates:
 
-* NEAT-Python: For implementing the NEAT algorithm.
+- ✔ Neuroevolution (NEAT-Python)  
+- ✔ Reward shaping & fitness engineering  
+- ✔ Interpretable ML (network visualization + vision lines)  
+- ✔ Fast training mode (no rendering)  
+- ✔ Saved best genome (`champion_bird.pkl`)  
+- ✔ ML-style training graph (`fitness_curve.png`)  
+- ✔ Champion playback mode (`play_champion.py`)  
 
-## Setup and Installation
+This is **not** a basic Flappy Bird clone — it’s a full **AI/ML systems project** showcasing model evolution, environment design, and visualization.
 
-1. Open a command prompt/terminal.
+---
 
-2. Run:
+## Installation
 
-pip install pygame
+Install dependencies:
 
-pip install neat-python
+```bash
+pip install pygame neat-python matplotlib
+```
+## Run training
+```bash
+python AI_Flappy_Bird.py
+```
+## Play Back the Trained Champion
 
-## Understanding the NEAT Algorithm
+After training, the best genome is saved as:
+```bash
+champion_bird.pkl
+```
+To watch your evolved AI play:
+```bash
+python play_champion.py
+```
+The playback script loads the pickled genome and runs it through the game environment, just like an evaluation phase in RL.
 
-NEAT Documentation: https://neat-python.readthedocs.io/en/latest/config_file.html
+## How the AI Learns (NEAT Overview)
 
-NEAT Article: https://nn.cs.utexas.edu/downloads/papers/stanley.cec02.pdf
+This project uses **NEAT** (NeuroEvolution of Augmenting Topologies), an algorithm that evolves:
 
-## Configuration Details
+- Network weights  
+- Activation functions  
+- Hidden nodes  
+- Network topology  
 
-* fitness_criterion: Defines how the best birds are selected based on their fitness scores (e.g., max, mean). Higher scores prioritize certain birds for breeding.
+Over generations, NEAT selects better-performing genomes and mutates them to discover more optimal policies.
 
-* fitness_threshold: The fitness level that, when reached, ends the simulation, indicating a successful performance.
+### References
+- NEAT Python docs: https://neat-python.readthedocs.io  
+- Original NEAT paper (Stanley & Miikkulainen):  
+  https://nn.cs.utexas.edu/downloads/papers/stanley.cec02.pdf
 
-* Species Management:
+---
 
-  * NEAT categorizes birds into species based on network architecture.
+## State Representation
 
-  * reset_on_extinction: If False, does not replace extinct species, maintaining current population diversity.
+The bird receives **four normalized inputs**:
 
-* Genome Configuration:
+| Input      | Description                          |
+|------------|--------------------------------------|
+| `y_norm`   | Bird's vertical position (0–1)        |
+| `top_diff` | Distance to top pipe gap              |
+| `bot_diff` | Distance to bottom pipe gap           |
+| `vel_norm` | Bird's vertical velocity              |
 
-  * activation_mutate_rate: Probability of mutating activation functions in nodes.
-  * activation_options: Pool of activation functions available for mutation.
-  * bias_max_value & bias_min_value: Range for initial bias values.
-  * bias_mutate_power: Scale of bias changes during mutation.
-  * bias_mutate_rate: Likelihood of bias mutation during reproduction.
-  * max_stagnation: Maximum generations without fitness improvement before a species is considered stagnant.
+These features create a compact **Markovian** state representation for stable learning.
 
-This setup encourages exploration and prevents stagnation by promoting diversity in genetic traits and network structures.
+---
 
-Thank you for taking the time to check out this project!
+## Reward Shaping (Fitness Function)
+
+The fitness signal is carefully engineered to promote smooth, stable flight:
+
+| Action / Behavior            | Reward / Penalty |
+|------------------------------|------------------|
+| Frame survived               | **+0.3**         |
+| Pass a pipe                  | **+20**          |
+| Hit ground/pipe              | **–1**           |
+| Jump spamming                | **–0.03**        |
+| Hugging screen top/bottom    | **–0.01**        |
+
+This reward system prevents degenerate behaviors and accelerates convergence.
+
+---
+
+## Training Visualization
+
+The script automatically generates:
+
+### **`fitness_curve.png`**
+Includes:
+- Best fitness per generation  
+- Average fitness  
+- ±1 standard deviation band  
+- Clean ML-style formatting  
+
+Example title:  
+**“NEAT Flappy Bird – Fitness Over Generations”**
+
+### **`champion_bird.pkl`**
+Serialized best genome after training  
+(ignored by Git via `.gitignore`).
+
+---
+
+## Controls
+
+### During Training
+| Key | Action                          |
+|-----|----------------------------------|
+| **F** | Toggle fast mode (no rendering) |
+| **D** | Toggle “vision” lines           |
+| **N** | Toggle neural net panel         |
+| **I** | Inspect inputs/outputs          |
+
+### During Champion Playback
+| Key | Action |
+|-----|--------|
+| **Q** | Quit  |
+
+---
+
+## Project Structure
+
+```bash
+AI-Flappy-Bird-GUH/
+│── Images/imgs/              # Game sprites
+│── AI_Flappy_Bird.py         # Main training + game logic
+│── play_champion.py          # Playback script for champion genome
+│── Config_Feedforward.txt    # NEAT configuration
+│── champion_bird.pkl         # Saved best genome (ignored in Git)
+│── fitness_curve.png         # Auto-generated training plot
+│── README.md                 # Project documentation
+│── .gitignore
+```
+
+## NEAT Configuration Highlights
+
+### **Population & Evolution**
+- `pop_size = 80`
+- `fitness_criterion = max` (selects highest performers)
+- `fitness_threshold` (early stopping when solved)
+
+### **Mutation Behavior**
+- `activation_mutate_rate`
+- `activation_options = tanh, sigmoid, relu`
+- `bias_mutate_rate`
+- `weight_mutate_rate`
+- `node_add_prob`, `conn_add_prob`
+
+### **Speciation**
+Preserves innovation by grouping similar genomes:
+
+- `compatibility_threshold`
+- `reset_on_extinction`
+- `max_stagnation`
+
+This prevents premature convergence and maintains diversity.
+
+---
+
+## Acknowledgements
+
+- **NEAT-Python** by Matt Cooper & contributors  
+- **NEAT algorithm** by Kenneth O. Stanley & Risto Miikkulainen
